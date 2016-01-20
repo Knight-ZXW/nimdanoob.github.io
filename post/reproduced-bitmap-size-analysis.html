@@ -5,28 +5,25 @@
   
   <title>Bitmap到底占多少内存 | Zous&#39;blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="出处“腾讯Bugly(http://bugly.qq.com)
-#0、写在前面
+  <meta name="description" content="出处“腾讯Bugly(http://bugly.qq.com)0、写在前面
 本文涉及到屏幕密度的讨论，这里先要搞清楚 DisplayMetrics 的两个变量，摘录官方文档的解释：
 
-density：The logical density of the display. This is a scaling factor for the Density Independent Pixel uni">
+density：The logical density of the display. This is a scaling factor for the Density Independent Pixel unit,">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Bitmap到底占多少内存">
 <meta property="og:url" content="http://up9527.com/post/reproduced-bitmap-size-analysis.html">
 <meta property="og:site_name" content="Zous'blog">
-<meta property="og:description" content="出处“腾讯Bugly(http://bugly.qq.com)
-#0、写在前面
+<meta property="og:description" content="出处“腾讯Bugly(http://bugly.qq.com)0、写在前面
 本文涉及到屏幕密度的讨论，这里先要搞清楚 DisplayMetrics 的两个变量，摘录官方文档的解释：
 
-density：The logical density of the display. This is a scaling factor for the Density Independent Pixel uni">
-<meta property="og:updated_time" content="2016-01-20T02:18:53.860Z">
+density：The logical density of the display. This is a scaling factor for the Density Independent Pixel unit,">
+<meta property="og:updated_time" content="2016-01-20T02:27:59.993Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Bitmap到底占多少内存">
-<meta name="twitter:description" content="出处“腾讯Bugly(http://bugly.qq.com)
-#0、写在前面
+<meta name="twitter:description" content="出处“腾讯Bugly(http://bugly.qq.com)0、写在前面
 本文涉及到屏幕密度的讨论，这里先要搞清楚 DisplayMetrics 的两个变量，摘录官方文档的解释：
 
-density：The logical density of the display. This is a scaling factor for the Density Independent Pixel uni">
+density：The logical density of the display. This is a scaling factor for the Density Independent Pixel unit,">
   
     <link rel="alternative" href="/atom.xml" title="Zous&#39;blog" type="application/atom+xml">
   
@@ -226,7 +223,7 @@ density：The logical density of the display. This is a scaling factor for the D
   
     <div class="article-meta">
       <a href="/post/reproduced-bitmap-size-analysis.html" class="article-date">
-      <time datetime="2016-01-20T02:18:53.871Z" itemprop="datePublished">2016-01-20</time>
+      <time datetime="2016-01-20T02:28:00.003Z" itemprop="datePublished">2016-01-20</time>
 </a>
     </div>
   
@@ -264,8 +261,7 @@ density：The logical density of the display. This is a scaling factor for the D
     <div class="article-entry" itemprop="articleBody">
       
           
-        <p><strong>出处“腾讯Bugly(<a href="http://bugly.qq.com" target="_blank" rel="external">http://bugly.qq.com</a>)</strong></p>
-<p>#<strong>0、写在前面</strong></p>
+        <p><strong>出处“腾讯Bugly(<a href="http://bugly.qq.com" target="_blank" rel="external">http://bugly.qq.com</a>)</strong><br><strong>0、写在前面</strong></p>
 <p>本文涉及到屏幕密度的讨论，这里先要搞清楚 DisplayMetrics 的两个变量，摘录官方文档的解释：</p>
 <ul>
 <li>density：The logical density of the display. This is a scaling factor for the Density Independent Pixel unit, where one DIP is one pixel on an approximately 160 dpi screen (for example a 240x320, 1.5”x2” screen), providing the baseline of the system’s display. Thus on a 160dpi screen this density value will be 1; on a 120 dpi screen it would be .75; etc.</li>
@@ -277,18 +273,15 @@ density：The logical density of the display. This is a scaling factor for the D
 <p>简单来说，可以理解为 density 的数值是 1dp=density px；densityDpi 是屏幕每英寸对应多少个点（不是像素点），在 DisplayMetrics 当中，这两个的关系是线性的：<br>| density  | 1   |  1.5  | 2 | 3 | 3.5 | 4 |<br>| ——   | —–:  | :—-:  |:—-:  |:—-:  |:—-:  |<br>| densityDpi  | 160   |  240  | 320 | 480 | 560 | 640 |</p>
 <p>为了不引起混淆，本文所有提到的密度除非特别说明，都指的是 densityDpi，当然如果你愿意，也可以用 density 来说明问题。</p>
 <p>另外，本文的依据主要来自 android 5.0 的源码，其他版本可能略有出入。文章难免疏漏，欢迎指正～</p>
-<p>#<strong>1、占了多大内存？</strong></p>
-<p>做移动客户端开发的朋友们肯定都因为图头疼过，说起来曾经还有过 leader 因为组里面一哥们在工程里面加了一张 jpg 的图发脾气的事儿，哈哈。</p>
+<h1 id="1_u3001_u5360_u4E86_u591A_u5927_u5185_u5B58_uFF1F"><a href="#1_u3001_u5360_u4E86_u591A_u5927_u5185_u5B58_uFF1F" class="headerlink" title="1、占了多大内存？"></a><strong>1、占了多大内存？</strong></h1><p>做移动客户端开发的朋友们肯定都因为图头疼过，说起来曾经还有过 leader 因为组里面一哥们在工程里面加了一张 jpg 的图发脾气的事儿，哈哈。</p>
 <p>为什么头疼呢？吃内存呗，时不时还给你来个 OOM 冲冲喜，让你的每一天过得有滋有味（真是没救了）。那每次工程里面增加一张图片的时候，我们都需要关心这货究竟要占多大的坑，占多大呢？Android API 有个方便的方法，<br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public final <span class="type">int</span> getByteCount() &#123;</span><br><span class="line">    // <span class="type">int</span> <span class="literal">result</span> permits bitmaps up to <span class="number">46</span>,<span class="number">340</span> x <span class="number">46</span>,<span class="number">340</span></span><br><span class="line">    <span class="keyword">return</span> getRowBytes() * getHeight();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>通过这个方法，我们就可以获取到一张 Bitmap 在运行时到底占用多大内存了。</p>
 <hr>
 <p>##举个例子##</p>
 <p>一张 <strong>522x686</strong> 的 <strong>PNG</strong> 图片，我把它放到 <strong>drawable-xxhdpi</strong> 目录下，在<strong>三星s6</strong>上加载，占用内存<strong>2547360B</strong>，就可以用这个方法获取到。</p>
 <hr>
-<p>#<strong>2、给我一张图我告诉你占多大内存</strong></p>
-<p>每次都问 Bitmap 你到底多大啦。。感觉怪怪的，毕竟我们不能总是去问，而不去搞清楚它为嘛介么大吧。能不能给它算个命，算算它究竟多大呢？当然是可以的，很简单嘛，我们直接顺藤摸瓜，找出真凶，哦不，找出答案。</p>
-<p>##<strong>2.1 getByteCount</strong></p>
-<p>getByteCount 的源码我们刚刚已经认识了，当我们问 Bitmap 大小的时候，这孩子也是先拿到出生年月日，然后算出来的，那么问题来了，getHeight 就是图片的高度（单位：px），getRowBytes 是什么？</p>
+<h1 id="2_u3001_u7ED9_u6211_u4E00_u5F20_u56FE_u6211_u544A_u8BC9_u4F60_u5360_u591A_u5927_u5185_u5B58"><a href="#2_u3001_u7ED9_u6211_u4E00_u5F20_u56FE_u6211_u544A_u8BC9_u4F60_u5360_u591A_u5927_u5185_u5B58" class="headerlink" title="2、给我一张图我告诉你占多大内存"></a><strong>2、给我一张图我告诉你占多大内存</strong></h1><p>每次都问 Bitmap 你到底多大啦。。感觉怪怪的，毕竟我们不能总是去问，而不去搞清楚它为嘛介么大吧。能不能给它算个命，算算它究竟多大呢？当然是可以的，很简单嘛，我们直接顺藤摸瓜，找出真凶，哦不，找出答案。</p>
+<h2 id="2-1_getByteCount"><a href="#2-1_getByteCount" class="headerlink" title="2.1 getByteCount"></a><strong>2.1 getByteCount</strong></h2><p>getByteCount 的源码我们刚刚已经认识了，当我们问 Bitmap 大小的时候，这孩子也是先拿到出生年月日，然后算出来的，那么问题来了，getHeight 就是图片的高度（单位：px），getRowBytes 是什么？</p>
 <pre><code>public final int getrowBytes() {
    if (mRecycled) {
           Log.w(TAG, &quot;Called getRowBytes() on a recycle()&apos;d bitmap! This is undefined behavior!&quot;);
@@ -305,8 +298,7 @@ density：The logical density of the display. This is a scaling factor for the D
 <p>还记得我们最开始给出的那个例子么？</p>
 <p>一张<strong>522*686</strong>的 <strong>PNG</strong> 图片，我把它放到 <strong>drawable-xxhdpi</strong> 目录下，在<strong>三星s6</strong>上加载，占用内存<strong>2547360B</strong>，就可以用这个方法获取到。</p>
 <p>然而公式计算出来的可是1<strong>432368B</strong>。。。</p>
-<p>2.2 <strong>Density</strong></p>
-<p>知道我为什么在举例的时候那么费劲的说放到xxx目录下，还要说用xxx手机么？你以为 Bitmap 加载只跟宽高有关么？Naive。</p>
+<h2 id="2-2_Density"><a href="#2-2_Density" class="headerlink" title="2.2 Density"></a>2.2 <strong>Density</strong></h2><p>知道我为什么在举例的时候那么费劲的说放到xxx目录下，还要说用xxx手机么？你以为 Bitmap 加载只跟宽高有关么？Naive。</p>
 <p>还是先看代码，我们读取的是 drawable 目录下面的图片，用的是 decodeResource 方法，该方法本质上就两步：</p>
 <p>读取原始资源，这个调用了 <strong>Resource.openRawResource</strong> 方法，这个方法调用完成之后会对 TypedValue 进行赋值，其中包含了原始资源的 density 等信息；<br>调用 decodeResourceStream 对原始资源进行解码和适配。这个过程实际上就是原始资源的 density 到屏幕 density 的一个映射。<br>原始资源的 density 其实取决于资源存放的目录（比如 xxhdpi 对应的是480），而屏幕 density 的赋值，请看下面这段代码：</p>
 <p><strong>BitmapFactory.java</strong></p>
@@ -319,8 +311,7 @@ density：The logical density of the display. This is a scaling factor for the D
 <p>再来看我们的例子：</p>
 <p>一张522*686的PNG 图片，我把它放到 drawable-xxhdpi 目录下，在三星s6上加载，占用内存2547360B，其中 density 对应 xxhdpi 为480，targetDensity 对应三星s6的密度为640：</p>
 <p>522/480 <em> 640 </em> 686/480  <em>640 </em> 4 = 2546432B</p>
-<p>##<strong>2.3 精度</strong></p>
-<p>越来越有趣了是不是，你肯定会发现我们这么细致的计算还是跟获取到的数值</p>
+<h2 id="2-3__u7CBE_u5EA6"><a href="#2-3__u7CBE_u5EA6" class="headerlink" title="2.3 精度"></a><strong>2.3 精度</strong></h2><p>越来越有趣了是不是，你肯定会发现我们这么细致的计算还是跟获取到的数值</p>
 <p><strong>不！一！样！</strong></p>
 <p>为什么呢？由于结果已经非常接近，我们很自然地想到精度问题。来，再把上面这段代码中的一句拿出来看看：</p>
 <pre><code>outputBitmap-&gt;setInfo(SkImageInfo::Make(scaledWidth, scaledHeight,
@@ -340,15 +331,13 @@ density：The logical density of the display. This is a scaling factor for the D
 <blockquote>
 <p>“源码之前，了无秘密”。</p>
 </blockquote>
-<p>##<strong>2.4 小结</strong></p>
-<p>其实，通过前面的代码跟踪，我们就不难知道，Bitmap 在内存当中占用的大小其实取决于：</p>
+<h2 id="2-4__u5C0F_u7ED3"><a href="#2-4__u5C0F_u7ED3" class="headerlink" title="2.4 小结"></a><strong>2.4 小结</strong></h2><p>其实，通过前面的代码跟踪，我们就不难知道，Bitmap 在内存当中占用的大小其实取决于：</p>
 <ul>
 <li>色彩格式，前面我们已经提到，如果是 ARGB8888 那么就是一个像素4个字节，如果是 RGB565 那就是2个字节</li>
 <li>原始文件存放的资源目录（是 hdpi 还是 xxhdpi 可不能傻傻分不清楚哈）</li>
-<li>目标屏幕的密度（所以同等条件下，红米在资源方面消耗的内存肯定是要小于三星S6的）<br>#<strong>3、想办法减少 Bitmap 内存占用</strong></li>
+<li>目标屏幕的密度（所以同等条件下，红米在资源方面消耗的内存肯定是要小于三星S6的）</li>
 </ul>
-<p>##<strong>3.1 Jpg 和 Png</strong></p>
-<p>说到这里，肯定会有人会说，我们用 jpg 吧，jpg 格式的图片不应该比 png 小么？</p>
+<h1 id="3_u3001_u60F3_u529E_u6CD5_u51CF_u5C11_Bitmap__u5185_u5B58_u5360_u7528"><a href="#3_u3001_u60F3_u529E_u6CD5_u51CF_u5C11_Bitmap__u5185_u5B58_u5360_u7528" class="headerlink" title="3、想办法减少 Bitmap 内存占用"></a><strong>3、想办法减少 Bitmap 内存占用</strong></h1><h2 id="3-1_Jpg__u548C_Png"><a href="#3-1_Jpg__u548C_Png" class="headerlink" title="3.1 Jpg 和 Png"></a><strong>3.1 Jpg 和 Png</strong></h2><p>说到这里，肯定会有人会说，我们用 jpg 吧，jpg 格式的图片不应该比 png 小么？</p>
 <p>这确实是个好问题，因为同样一张图片，jpg 确实比 png 会多少小一些（甚至很多），原因很简单，jpg 是一种<strong>有损压缩</strong>的图片存储格式，而 png 则是 <strong>无损压缩</strong>的图片存储格式，显而易见，<strong>jpg 会比 png 小，代价也是显而易见的。</strong></p>
 <p>可是，这说的是文件存储范畴的事情，<strong>它们只存在于文件系统，而非内存或者显存</strong>。说得简单一点儿，我有一个极品飞车的免安装硬盘版的压缩包放在我的磁盘里面，这个游戏是不能玩的，我需要先解压，才能玩——jpg 也好，png 也好就是个压缩包的概念，而我们讨论的<strong>内存占用则是从使用角度来讨论的</strong>。</p>
 <p>所以，jpg 格式的图片与 png 格式的图片在内存当中不应该有什么不同。</p>
@@ -369,8 +358,7 @@ density：The logical density of the display. This is a scaling factor for the D
 <li>目标用户的 cpu 是否强劲？jpg 的图像压缩算法比 png 耗时。这方面还是要酌情选择，前几年做了一段时间 Cocos2dx，由于资源非常多，项目组要求统一使用 png，可能就是出于这方面的考虑。</li>
 </ul>
 <p>嗯，跑题了，我们其实想说的是怎么减少内存占用的。。这一小节只是想说，休想通过这个方法来减少内存占用。。。XD</p>
-<p>##<strong>3.2 使用 inSampleSize</strong></p>
-<p>有些朋友一看到这个肯定就笑了。采样嘛，我以前是学信号处理的，一看到 Sample 就抽抽。。哈哈开个玩笑，这个采样其实就跟统计学里面的采样是一样的，在保证最终效果满足要求的前提下减少样本规模，方便后续的数据采集和处理。</p>
+<h2 id="3-2__u4F7F_u7528_inSampleSize"><a href="#3-2__u4F7F_u7528_inSampleSize" class="headerlink" title="3.2 使用 inSampleSize"></a><strong>3.2 使用 inSampleSize</strong></h2><p>有些朋友一看到这个肯定就笑了。采样嘛，我以前是学信号处理的，一看到 Sample 就抽抽。。哈哈开个玩笑，这个采样其实就跟统计学里面的采样是一样的，在保证最终效果满足要求的前提下减少样本规模，方便后续的数据采集和处理。</p>
 <p>这个方法主要用在图片资源本身较大，或者适当地采样并不会影响视觉效果的条件下，这时候我们输出地目标可能相对较小，对图片分辨率、大小要求不是非常的严格。</p>
 <hr>
 <p>举个例子</p>
@@ -378,8 +366,7 @@ density：The logical density of the display. This is a scaling factor for the D
 <p>这时候你一定会想到三个字母在你的脑海里挥之不去，它们就是『OOM』。</p>
 <p>既然图片最终是要被模糊的，也看不太情况，还不如直接用一张采样后的图片，如果<strong>采样率为 2</strong>，那么读出来的图片只有<strong>原始图片的 1/4</strong> 大小，真是何乐而不为呢？？</p>
 <figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">BitmapFactory.<span class="keyword">Options</span> <span class="keyword">options</span> = <span class="keyword">new</span> <span class="keyword">Options</span>();</span><br><span class="line"><span class="keyword">options</span>.inSampleSize = <span class="number">2</span>;</span><br><span class="line">Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resId, <span class="keyword">options</span>);</span><br></pre></td></tr></table></figure>
-<p>##<strong>3.3 使用矩阵</strong></p>
-<p>用到 Bitmap 的地方，总会见到 Matrix。这时候你会想到什么？</p>
+<h2 id="3-3__u4F7F_u7528_u77E9_u9635"><a href="#3-3__u4F7F_u7528_u77E9_u9635" class="headerlink" title="3.3 使用矩阵"></a><strong>3.3 使用矩阵</strong></h2><p>用到 Bitmap 的地方，总会见到 Matrix。这时候你会想到什么？</p>
 <blockquote>
 <p>『基友』</p>
 <p>『是在下输了。。』</p>
@@ -387,21 +374,17 @@ density：The logical density of the display. This is a scaling factor for the D
 <p>其实想想，Bitmap 的像素点阵，还不就是个矩阵，真是你中有我，我中有你的交情啊。那么什么时候用矩阵呢？</p>
 <p><strong>大图小用用采样，小图大用用矩阵。</strong></p>
 <p>还是用前面模糊图片的例子，我们不是采样了么？内存是小了，可是图的尺寸也小了啊，我要用 Canvas 绘制这张图可怎么办？当然是用矩阵了：</p>
-<p>###<strong>方式一：</strong></p>
-<p>Matrix matrix = new Matrix();<br>matrix.preScale(2, 2, 0f, 0f);<br>//如果使用直接替换矩阵的话，在Nexus6 5.1.1上必须关闭硬件加速<br>canvas.concat(matrix);<br>canvas.drawBitmap(bitmap, 0,0, paint);<br>需要注意的是，在使用搭载 5.1.1 原生系统的 Nexus6 进行测试时发现，如果使用 Canvas 的 setMatrix 方法，可能会导致与矩阵相关的元素的绘制存在问题，本例当中如果使用 setMatrix 方法，bitmap 将不会出现在屏幕上。因此请尽量使用 canvas 的 scale、rotate 这样的方法，或者使用 concat 方法。</p>
-<p>###<strong>方式二</strong>：</p>
-<p>Matrix matrix = new Matrix();<br>matrix.preScale(2, 2, 0, 0);<br>canvas.drawBitmap(bitmap, matrix, paint);<br>这样，绘制出来的图就是放大以后的效果了，不过占用的内存却仍然是我们采样出来的大小。</p>
+<h3 id="u65B9_u5F0F_u4E00_uFF1A"><a href="#u65B9_u5F0F_u4E00_uFF1A" class="headerlink" title="方式一："></a><strong>方式一：</strong></h3><p>Matrix matrix = new Matrix();<br>matrix.preScale(2, 2, 0f, 0f);<br>//如果使用直接替换矩阵的话，在Nexus6 5.1.1上必须关闭硬件加速<br>canvas.concat(matrix);<br>canvas.drawBitmap(bitmap, 0,0, paint);<br>需要注意的是，在使用搭载 5.1.1 原生系统的 Nexus6 进行测试时发现，如果使用 Canvas 的 setMatrix 方法，可能会导致与矩阵相关的元素的绘制存在问题，本例当中如果使用 setMatrix 方法，bitmap 将不会出现在屏幕上。因此请尽量使用 canvas 的 scale、rotate 这样的方法，或者使用 concat 方法。</p>
+<h3 id="u65B9_u5F0F_u4E8C_uFF1A"><a href="#u65B9_u5F0F_u4E8C_uFF1A" class="headerlink" title="方式二："></a><strong>方式二</strong>：</h3><p>Matrix matrix = new Matrix();<br>matrix.preScale(2, 2, 0, 0);<br>canvas.drawBitmap(bitmap, matrix, paint);<br>这样，绘制出来的图就是放大以后的效果了，不过占用的内存却仍然是我们采样出来的大小。</p>
 <p>如果我要把图片放到 ImageView 当中呢？一样可以，请看：</p>
 <p>Matrix matrix = new Matrix();<br>matrix.postScale(2, 2, 0, 0);<br>imageView.setImageMatrix(matrix);<br>imageView.setScaleType(ScaleType.MATRIX);<br>imageView.setImageBitmap(bitmap);</p>
-<p>##<strong>3.4 合理选择Bitmap的像素格式</strong></p>
-<p>其实前面我们已经多次提到这个问题。ARGB8888格式的图片，每像素占用 4 Byte，而 RGB565则是 2 Byte。我们先看下有多少种格式可选：<br>| 格式 | 描述   |<br>| -   | :  |<br>| ALPH_8 | 只有一个alpha通道 |<br>| ARGB_4444 | 这个从API 13开始不建议使用，因为质量太差 |<br>| ARGB_8888 | ARGB四个通道，每个通道8bit |<br>| RGB_565 | 每个像素占2Byte，其中红色占5bit，绿色占6bit，蓝色占5bit |</p>
+<h2 id="3-4__u5408_u7406_u9009_u62E9Bitmap_u7684_u50CF_u7D20_u683C_u5F0F"><a href="#3-4__u5408_u7406_u9009_u62E9Bitmap_u7684_u50CF_u7D20_u683C_u5F0F" class="headerlink" title="3.4 合理选择Bitmap的像素格式"></a><strong>3.4 合理选择Bitmap的像素格式</strong></h2><p>其实前面我们已经多次提到这个问题。ARGB8888格式的图片，每像素占用 4 Byte，而 RGB565则是 2 Byte。我们先看下有多少种格式可选：<br>| 格式 | 描述   |<br>| -   | :  |<br>| ALPH_8 | 只有一个alpha通道 |<br>| ARGB_4444 | 这个从API 13开始不建议使用，因为质量太差 |<br>| ARGB_8888 | ARGB四个通道，每个通道8bit |<br>| RGB_565 | 每个像素占2Byte，其中红色占5bit，绿色占6bit，蓝色占5bit |</p>
 <p>这几个当中，</p>
 <p><strong>ALPHA8</strong> 没必要用，因为我们随便用个颜色就可以搞定的。</p>
 <p><strong>ARGB4444</strong> 虽然占用内存只有 <strong>ARGB8888</strong> 的一半，不过已经被官方嫌弃，失宠了。。『又要占省内存，又要看着爽，臣妾做不到啊T T』。</p>
 <p><strong>ARGB8888</strong> 是最常用的，大家应该最熟悉了。</p>
 <p><strong>RGB565</strong> 看到这个，我就看到了资源优化配置无处不在，这个绿色。。（不行了，突然好邪恶XD），其实如果不需要 alpha 通道，特别是资源本身为 jpg 格式的情况下，用这个格式比较理想。</p>
-<p>###<strong>3.5 高能：索引位图(Indexed Bitmap)</strong></p>
-<p>索引位图，每个像素只占 1 Byte，不仅支持 RGB，还支持 alpha，而且看上去效果还不错！等等，请收起你的口水，Android 官方并不支持这个。是的，你没看错，官方并不支持。<br><figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> public <span class="class"><span class="keyword">enum</span> <span class="title">Config</span> &#123;</span></span><br><span class="line">    /<span class="regexp">/ these native values must match up with the enum in SkBitmap.h</span><br><span class="line"></span><br><span class="line">    ALPHA_8     (2),</span><br><span class="line">    RGB_565     (4),</span><br><span class="line">    ARGB_4444   (5),</span><br><span class="line">    ARGB_8888   (6);</span><br><span class="line"></span><br><span class="line">    final int nativeInt;</span><br><span class="line">&#125;</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="3-5__u9AD8_u80FD_uFF1A_u7D22_u5F15_u4F4D_u56FE_28Indexed_Bitmap_29"><a href="#3-5__u9AD8_u80FD_uFF1A_u7D22_u5F15_u4F4D_u56FE_28Indexed_Bitmap_29" class="headerlink" title="3.5 高能：索引位图(Indexed Bitmap)"></a><strong>3.5 高能：索引位图(Indexed Bitmap)</strong></h2><p>索引位图，每个像素只占 1 Byte，不仅支持 RGB，还支持 alpha，而且看上去效果还不错！等等，请收起你的口水，Android 官方并不支持这个。是的，你没看错，官方并不支持。<br><figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> public <span class="class"><span class="keyword">enum</span> <span class="title">Config</span> &#123;</span></span><br><span class="line">    /<span class="regexp">/ these native values must match up with the enum in SkBitmap.h</span><br><span class="line"></span><br><span class="line">    ALPHA_8     (2),</span><br><span class="line">    RGB_565     (4),</span><br><span class="line">    ARGB_4444   (5),</span><br><span class="line">    ARGB_8888   (6);</span><br><span class="line"></span><br><span class="line">    final int nativeInt;</span><br><span class="line">&#125;</span></span><br></pre></td></tr></table></figure></p>
 <p>不过，Skia 引擎是支持的，不信你再看：<br><figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Config</span> &#123;</span></span><br><span class="line">   kNo_Config,   <span class="regexp">//</span>!&lt; bitmap has not been configured</span><br><span class="line">     kA8_Config,   <span class="regexp">//</span>!&lt; <span class="number">8</span>-bits per pixel, <span class="keyword">with</span> only alpha specified (<span class="number">0</span> is transparent, <span class="number">0xFF</span> is opaque)</span><br><span class="line"></span><br><span class="line">   /<span class="regexp">/看这里看这里！！↓↓↓↓↓</span><br><span class="line">    kIndex8_Config, /</span><span class="regexp">/!&lt; 8-bits per pixel, using SkColorTable to specify the colors  </span><br><span class="line">    kRGB_565_Config, /</span><span class="regexp">/!&lt; 16-bits per pixel, (see SkColorPriv.h for packing)</span><br><span class="line">    kARGB_4444_Config, /</span><span class="regexp">/!&lt; 16-bits per pixel, (see SkColorPriv.h for packing)</span><br><span class="line">    kARGB_8888_Config, /</span><span class="regexp">/!&lt; 32-bits per pixel, (see SkColorPriv.h for packing)</span><br><span class="line">    kRLE_Index8_Config,</span><br><span class="line"></span><br><span class="line">    kConfigCount</span><br><span class="line">&#125;;</span></span><br></pre></td></tr></table></figure></p>
 <p>其实 Java 层的枚举变量的 nativeInt 对应的就是 Skia 库当中枚举的索引值，所以，如果我们能够拿到这个索引是不是就可以了？对不起，拿不到。</p>
 <p>不行了，废话这么多，肯定要挨板砖了T T。</p>
@@ -419,16 +402,14 @@ density：The logical density of the display. This is a scaling factor for the D
 <p>If the bitmap’s internal config is in one of the public formats, return that config, otherwise return null.</p>
 <p>再说一遍，黑户。。XD。</p>
 <p>看来这个法子还真行啊，占用内存一下小很多。不过由于官方并未做出支持，因此这个方法有诸多限制，比如不能在 xml 中直接配置，，生成的 Bitmap 不能用于构建 Canvas 等等。</p>
-<p>###<strong>3.6 每个像素占2Byte，其中红色占5bit，绿色占6bit，蓝色占5bit</strong></p>
-<p>其实我们一直在抱怨资源大，有时候有些场景其实不需要图片也能完成的。比如在开发中我们会经常遇到 Loading，这些 Loading 通常就是几帧图片，图片也比较简单，只需要黑白灰加 alpha 就齐了。</p>
+<h2 id="3-6__u6BCF_u4E2A_u50CF_u7D20_u53602Byte_uFF0C_u5176_u4E2D_u7EA2_u8272_u53605bit_uFF0C_u7EFF_u8272_u53606bit_uFF0C_u84DD_u8272_u53605bit"><a href="#3-6__u6BCF_u4E2A_u50CF_u7D20_u53602Byte_uFF0C_u5176_u4E2D_u7EA2_u8272_u53605bit_uFF0C_u7EFF_u8272_u53606bit_uFF0C_u84DD_u8272_u53605bit" class="headerlink" title="3.6 每个像素占2Byte，其中红色占5bit，绿色占6bit，蓝色占5bit"></a><strong>3.6 每个像素占2Byte，其中红色占5bit，绿色占6bit，蓝色占5bit</strong></h2><p>其实我们一直在抱怨资源大，有时候有些场景其实不需要图片也能完成的。比如在开发中我们会经常遇到 Loading，这些 Loading 通常就是几帧图片，图片也比较简单，只需要黑白灰加 alpha 就齐了。</p>
 <blockquote>
 <p>『排期太紧了，这些给我出一系列图吧』</p>
 <p>『好，不过每张图都是 300*30 0的 png 哈，总共 5 张，为了适配不同的分辨率，需要出 xxhdpi 和 xxxhdpi 的两套图。。』</p>
 </blockquote>
 <p>Orz。。。</p>
 <p>如果是这样，你还是自定义一个 View，覆写 onDraw 自己画一下好了。。。</p>
-<p>#<strong>4、结语</strong></p>
-<p>写了这么多，我们来稍稍理一理，本文主要讨论了如何运行时获取 Bitmap 占用内存的大小，如果事先根据 Bitmap 的格式、读取方式等算出其占用内存的大小，后面又整理了一些常见的 Bitmap 使用建议。突然好像说，是时候研究一下 Skia 引擎了。</p>
+<h1 id="4_u3001_u7ED3_u8BED"><a href="#4_u3001_u7ED3_u8BED" class="headerlink" title="4、结语"></a><strong>4、结语</strong></h1><p>写了这么多，我们来稍稍理一理，本文主要讨论了如何运行时获取 Bitmap 占用内存的大小，如果事先根据 Bitmap 的格式、读取方式等算出其占用内存的大小，后面又整理了一些常见的 Bitmap 使用建议。突然好像说，是时候研究一下 Skia 引擎了。</p>
 <p>怎么办，看来扔了好几年的 C++还是要捡回来么。。噗。。。</p>
 
       
@@ -440,8 +421,8 @@ density：The logical density of the display. This is a scaling factor for the D
     <div class="copyright">
         <p><span>本文标题:</span><a href="/post/reproduced-bitmap-size-analysis.html">Bitmap到底占多少内存</a></p>
         <p><span>文章作者:</span><a href="/" title="访问 Zous 的个人博客">Zous</a></p>
-        <p><span>发布时间:</span>2016年01月20日 - 10时18分</p>
-        <p><span>最后更新:</span>2016年01月20日 - 10时18分</p>
+        <p><span>发布时间:</span>2016年01月20日 - 10时28分</p>
+        <p><span>最后更新:</span>2016年01月20日 - 10时27分</p>
         <p>
             <span>原始链接:</span><a class="post-url" href="/post/reproduced-bitmap-size-analysis.html" title="Bitmap到底占多少内存">http://up9527.com/post/reproduced-bitmap-size-analysis.html</a>
             <span class="copy-path" data-clipboard-text="原文: http://up9527.com/post/reproduced-bitmap-size-analysis.html　　作者: Zous" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
@@ -471,7 +452,7 @@ density：The logical density of the display. This is a scaling factor for the D
 
     <div id="toc" class="toc-article">
     <strong class="toc-title">文章目录</strong>
-    
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1_u3001_u5360_u4E86_u591A_u5927_u5185_u5B58_uFF1F"><span class="toc-number">1.</span> <span class="toc-text">1、占了多大内存？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2_u3001_u7ED9_u6211_u4E00_u5F20_u56FE_u6211_u544A_u8BC9_u4F60_u5360_u591A_u5927_u5185_u5B58"><span class="toc-number">2.</span> <span class="toc-text">2、给我一张图我告诉你占多大内存</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1_getByteCount"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 getByteCount</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2_Density"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 Density</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3__u7CBE_u5EA6"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 精度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4__u5C0F_u7ED3"><span class="toc-number">2.4.</span> <span class="toc-text">2.4 小结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3_u3001_u60F3_u529E_u6CD5_u51CF_u5C11_Bitmap__u5185_u5B58_u5360_u7528"><span class="toc-number">3.</span> <span class="toc-text">3、想办法减少 Bitmap 内存占用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1_Jpg__u548C_Png"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 Jpg 和 Png</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2__u4F7F_u7528_inSampleSize"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 使用 inSampleSize</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3__u4F7F_u7528_u77E9_u9635"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 使用矩阵</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#u65B9_u5F0F_u4E00_uFF1A"><span class="toc-number">3.3.1.</span> <span class="toc-text">方式一：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#u65B9_u5F0F_u4E8C_uFF1A"><span class="toc-number">3.3.2.</span> <span class="toc-text">方式二：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-4__u5408_u7406_u9009_u62E9Bitmap_u7684_u50CF_u7D20_u683C_u5F0F"><span class="toc-number">3.4.</span> <span class="toc-text">3.4 合理选择Bitmap的像素格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-5__u9AD8_u80FD_uFF1A_u7D22_u5F15_u4F4D_u56FE_28Indexed_Bitmap_29"><span class="toc-number">3.5.</span> <span class="toc-text">3.5 高能：索引位图(Indexed Bitmap)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-6__u6BCF_u4E2A_u50CF_u7D20_u53602Byte_uFF0C_u5176_u4E2D_u7EA2_u8272_u53605bit_uFF0C_u7EFF_u8272_u53606bit_uFF0C_u84DD_u8272_u53605bit"><span class="toc-number">3.6.</span> <span class="toc-text">3.6 每个像素占2Byte，其中红色占5bit，绿色占6bit，蓝色占5bit</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4_u3001_u7ED3_u8BED"><span class="toc-number">4.</span> <span class="toc-text">4、结语</span></a></li></ol>
 </div>
 <style>
     .left-col .switch-btn {
